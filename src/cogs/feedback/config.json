@@ -1,0 +1,11 @@
+{
+    "thread": {
+        "inactivity": 4320,
+        "age": 7
+    },
+    "user": {
+        "cooldown": 3,
+        "cost": 3,
+        "reward": 1
+    }
+}
