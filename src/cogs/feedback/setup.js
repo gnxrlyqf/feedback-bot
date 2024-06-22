@@ -1,9 +1,8 @@
 const { ThreadAutoArchiveDuration } = require("discord.js");
 require("dotenv").config();
-const mysql = require("mysql2");
 const fs = require("fs");
 
-const con = require("./../../database.js");
+const sql = require("./../../database.js");
 
 const defconfig = {
 	"thread": {
@@ -49,20 +48,21 @@ module.exports = {
 }
 
 function init(interaction) {
-	con.query(`
+	sql.query(`
 		DROP DATABASE IF EXISTS fdb;
 		CREATE DATABASE fdb;
 		USE fdb;
 		CREATE TABLE users (
 			id VARCHAR(256) PRIMARY KEY,
-			points INT
+			points INT,
+			is_banned BOOLEAN
 		);
 		CREATE TABLE threads (
-			num INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+			num INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 			id VARCHAR(256),
 			op VARCHAR(256)
-		)
-	`)
+		);
+	`, (err) => { if (err) throw err})
 	
 	fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(defconfig, null, 4), err => {
 		if (err) console.log(err);

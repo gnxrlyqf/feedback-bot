@@ -4,14 +4,43 @@ const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 const fs = require("fs");
 const commands = [
 	{
-		name: "upload",
-		description: "File upload test",
+		name: "feedback",
+		description: "Submit a feedback request post",
 		options: [
 			{
-				name: "file",
-				description: "file to be uploaded",
-				type: ApplicationCommandOptionType.Attachment,
-				required: true
+				name: "ask",
+				description: "Ask for feedback",
+				type: ApplicationCommandOptionType.Subcommand,
+				options: [
+					{
+						name: "file",
+						description: "file to ask for feedback on",
+						type: ApplicationCommandOptionType.Attachment,
+						required: true
+					},
+					{
+						name: "message",
+						description: "Write a short message in your post",
+						type: ApplicationCommandOptionType.String
+					},
+					{
+						name: "anonymous",
+						description: "Submit request anonymously (False by default)",
+						type: ApplicationCommandOptionType.Boolean
+					}
+				]
+			},
+			{
+				name: "give",
+				description: "Give feedback",
+				type: ApplicationCommandOptionType.Subcommand,
+				options: [
+					{
+						name: "anonymous",
+						description: "Give feedback anonymously (False by default)",
+						type: ApplicationCommandOptionType.Boolean
+					}
+				]
 			}
 		]
 	},
@@ -198,6 +227,18 @@ const commands = [
 								description: "Amount to remove from a user",
 								type: ApplicationCommandOptionType.Integer,
 								required: true
+							}
+						]
+					},
+					{
+						name: "count",
+						description: "shows a user's point count",
+						type: ApplicationCommandOptionType.Subcommand,
+						options: [
+							{
+								name: "user",
+								description: "user whose points to show",
+								type: ApplicationCommandOptionType.User
 							}
 						]
 					}

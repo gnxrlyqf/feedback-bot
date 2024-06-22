@@ -1,10 +1,11 @@
-const { ThreadAutoArchiveDuration } = require("discord.js");
+const {} = require("discord.js");
 require("dotenv").config();
+const fs = require("fs");
 
-const con = require("./../../database.js");
+const sql = require("./../../database.js");
 
 const func = {
-	"upload": upload,
+	"ask": ask,
 	"archive": archive
 }
 
@@ -13,43 +14,52 @@ module.exports = {
 		client.on("interactionCreate", (interaction) => {
 			if (!interaction.isChatInputCommand()) return;
 
-			if (interaction.commandName in func) {
-				func[interaction.commandName](interaction, client);
+			const sub = interaction.options.getSubcommand();
+			if (sub in func) {
+				func[sub](interaction, client);
 			}
 		});
 	}
 }
 
-async function upload(interaction, client) {
-	con.query("USE fdb", async (err) => {
-		if (err) {
-			console.log(err.message);
-			interaction.reply(`Database uninitialized!`);
-			return;
-		} else {
-			con.query(`INSERT IGNORE INTO users (id, points) VALUES (${interaction.user.id}, 0)`);
-		
-			const forum = await client.channels.fetch(process.env.FORUM_ID);
-			const file = interaction.options.getAttachment("file");
-			const thread = await forum.threads.create(
-				{
-					name: "test",
-					message: { content: file.url },
-					autoArchiveDuration: ThreadAutoArchiveDuration.OneHour
-				}
-			);
-			con.query(`INSERT IGNORE INTO threads (id, op) VALUES (${thread.id}, ${interaction.user.id})`);
-		
-			interaction.reply(`Thread created: ${thread.url} - OP: <@${interaction.user.id}>`);
+async function ask(interaction, client) {
+	await sql.promise().query(`INSERT IGNORE INTO users (id) VALUES (${interaction.user.id})`);
+	
+	if (await check(interaction)) return;
 
+	const forum = await client.channels.fetch(process.env.FORUM_ID);
+	const file = interaction.options.getAttachment("file");
+
+	const thread = await forum.threads.create(
+		{
+			name: "Feedback request",
+			message: { content: file.url },
 		}
+	);
+	fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, string) => {
+		if (err) throw err;
+		const config = JSON.parse(string);
+		thread.setAutoArchiveDuration(config.thread.inactivity);
+		await sql.promise().query(`
+			UPDATE users
+			SET points = points - ${config.user.cost}
+			WHERE id = ${interaction.user.id}
+		`)
 	})
+	await sql.promise().query(`INSERT IGNORE INTO threads (id, op) VALUES (${thread.id}, ${interaction.user.id})`);
+	sql.query(`SELECT * FROM threads WHERE id = ${thread.id}`, (err, result) => {
+		if (err) throw err;
+		console.log(result);
+		thread.setName(`Feedback request #${result[0].num}`);
+	})
+
+	interaction.reply(`Thread created: ${thread.url}`);
 }
 
 async function archive(interaction, client) {
 	const num = interaction.options.getInteger("num")
 
-	con.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
+	sql.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
 		if (err) throw err;
 		const forum = await client.channels.fetch(process.env.FORUM_ID);
 		if (result) {
@@ -66,5 +76,28 @@ async function archive(interaction, client) {
 		} else {
 			interaction.reply("Thread not found");
 		}
+	})
+}
+
+function check(interaction) {
+	return new Promise((resolve) => {
+		sql.query(`SELECT * FROM users WHERE id = ${interaction.user.id}`, (err, result) => {
+			if (err) throw err;
+	
+			if (result[0].is_banned === 1) {
+				interaction.reply("You have been banned from submitting feedback requests");
+				return resolve(true);
+			}
+	
+			fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, data) => {
+				if (err) throw err;
+				const config = JSON.parse(data);
+				if (result[0].points < config.user.cost) {
+					interaction.reply("You do not have enough points to submit a feedback request")
+					return resolve(true);
+				}
+				return resolve(false);
+			})
+		})
 	})
 }
