@@ -5,12 +5,12 @@ const fs = require("fs");
 const sql = require("./../../database.js");
 
 const func = {
-	"points": {
-		"set": set,
-		"add": add,
-		"remove": remove,
-		"count": count
-	}
+	"set": set,
+	"add": add,
+	"remove": remove,
+	"count": count,
+	"ban": ban,
+	"pardon": pardon
 }
 
 module.exports = {
@@ -19,17 +19,19 @@ module.exports = {
 			if (!interaction.isChatInputCommand()) return;
 
 			const sub = interaction.options.getSubcommand();
-			if (sub in func.points) {
-				func["points"][sub](interaction);
+			if (sub in func) {
+				func[sub](interaction);
 			}
 		})
 	}
 }
 
 async function set(interaction) {
-	await sql.promise().query(`INSERT IGNORE INTO users (id) VALUES (${interaction.user.id})`);
-
 	const user = interaction.options.getUser("user");
+	await sql.promise().query(`
+		INSERT IGNORE INTO users (id, points, is_banned)
+		VALUES (${user.id}, 0, 0)
+	`);
 	const value = interaction.options.getInteger("value");
 
 	sql.query(`UPDATE users SET points = ${value} WHERE id = ${user.id}`);
@@ -38,7 +40,10 @@ async function set(interaction) {
 }
 
 async function add(interaction) {
-	await sql.promise().query(`INSERT IGNORE INTO users (id) VALUES (${interaction.user.id})`);
+	await sql.promise().query(`
+		INSERT IGNORE INTO users (id, points, is_banned)
+		VALUES (${interaction.user.id}, 0, 0)
+	`);
 
 	const user = interaction.options.getUser("user");
 	const value = interaction.options.getInteger("value");
@@ -51,9 +56,11 @@ async function add(interaction) {
 }
 
 async function remove(interaction) {
-	await sql.promise().query(`INSERT IGNORE INTO users (id) VALUES (${interaction.user.id})`);
-
 	const user = interaction.options.getUser("user");
+	await sql.promise().query(`
+		INSERT IGNORE INTO users (id, points, is_banned)
+		VALUES (${user.id}, 0, 0)
+	`);
 	const value = interaction.options.getInteger("value");
 
 	await sql.promise().query(`
@@ -73,10 +80,49 @@ async function remove(interaction) {
 
 async function count(interaction) {
 	let user = interaction.options.getUser("user");
+	await sql.promise().query(`
+		INSERT IGNORE INTO users (id, points, is_banned)
+		VALUES (${user.id}, 0, 0)`);
 	user = user || interaction.user;
 
 	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, (err, result) => {
 		if (err) throw err;
 		interaction.reply(`**${user.globalName}** has **${result[0].points}** points`)
+	});
+}
+
+async function ban(interaction) {
+	const user = interaction.options.getUser("user");
+	await sql.promise().query(`
+		INSERT IGNORE INTO users (id, points, is_banned)
+		VALUES (${user.id}, 0, 0)
+	`);
+
+	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, async (err, result) => {
+		if (err) throw err;
+		if (result[0].is_banned === 1) {
+			interaction.reply(`**${user.globalName}** is already banned from the feedback system`)
+		} else {
+			await sql.promise().query(`UPDATE users SET is_banned = 1 WHERE id = ${user.id}`)
+			interaction.reply(`**${user.globalName}** has been banned from the feedback system`)
+		}
+	});
+}
+
+async function pardon(interaction) {
+	const user = interaction.options.getUser("user");
+	await sql.promise().query(`
+		INSERT IGNORE INTO users (id, points, is_banned)
+		VALUES (${user.id}, 0, 0)
+	`);
+
+	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, async (err, result) => {
+		if (err) throw err;
+		if (result[0].is_banned === 0) {
+			interaction.reply(`**${user.globalName}** is not banned from the feedback system`)
+		} else {
+			await sql.promise().query(`UPDATE users SET is_banned = 0 WHERE id = ${user.id}`)
+			interaction.reply(`**${user.globalName}** has been unbanned from the feedback system`)
+		}
 	});
 }

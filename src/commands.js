@@ -71,6 +71,19 @@ const commands = [
 				type: ApplicationCommandOptionType.SubcommandGroup,
 				options: [
 					{
+						name: "channel",
+						description: "Configure forum channel for feedback posts",
+						type: ApplicationCommandOptionType.Subcommand,
+						options: [
+							{
+								name: "channel",
+								description: "choose channel",
+								type: ApplicationCommandOptionType.Channel,
+								required: true
+							}
+						]
+					},
+					{
 						name: "inactivity",
 						description: "Inactivity period of posts, inactive posts are moved to the bottom of the forum channel",
 						type: ApplicationCommandOptionType.Subcommand,
@@ -241,6 +254,49 @@ const commands = [
 								type: ApplicationCommandOptionType.User
 							}
 						]
+					},
+				]
+			},
+			{
+				name: "ban",
+				description: "Bans a user from the feedback system. Banned users cannot ask for or give feedback",
+				type: ApplicationCommandOptionType.Subcommand,
+				options: [
+					{
+						name: "user",
+						description: "user to ban",
+						type: ApplicationCommandOptionType.User,
+						required: true
+					}
+				]
+			},
+			{
+				name: "pardon",
+				description: "Unbans a user from the feedback system",
+				type: ApplicationCommandOptionType.Subcommand,
+				options: [
+					{
+						name: "user",
+						description: "user to unban",
+						type: ApplicationCommandOptionType.User,
+						required: true
+					}
+				]
+			},
+			{
+				name: "list",
+				description: "Show users registered into the feedback system",
+				type: ApplicationCommandOptionType.SubcommandGroup,
+				options: [
+					{
+						name: "all",
+						description: "Lists all users",
+						type: ApplicationCommandOptionType.Subcommand
+					},
+					{
+						name: "banned",
+						description: "Lists banned users",
+						type: ApplicationCommandOptionType.Subcommand
 					}
 				]
 			}

@@ -23,37 +23,40 @@ module.exports = {
 }
 
 async function ask(interaction, client) {
-	await sql.promise().query(`INSERT IGNORE INTO users (id) VALUES (${interaction.user.id})`);
+	await sql.promise().query(`
+		INSERT IGNORE INTO users (id, points, is_banned)
+		VALUES (${interaction.user.id}, 0, is_banned)
+	`);
 	
 	if (await check(interaction)) return;
 
-	const forum = await client.channels.fetch(process.env.FORUM_ID);
-	const file = interaction.options.getAttachment("file");
-
-	const thread = await forum.threads.create(
-		{
-			name: "Feedback request",
-			message: { content: file.url },
-		}
-	);
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, string) => {
 		if (err) throw err;
 		const config = JSON.parse(string);
+
+		const forum = await client.channels.fetch(config.thread.channel);
+		const file = interaction.options.getAttachment("file");
+	
+		const thread = await forum.threads.create(
+			{
+				name: "Feedback request",
+				message: { content: file.url },
+			}
+		);
 		thread.setAutoArchiveDuration(config.thread.inactivity);
 		await sql.promise().query(`
 			UPDATE users
 			SET points = points - ${config.user.cost}
 			WHERE id = ${interaction.user.id}
 		`)
+		await sql.promise().query(`INSERT IGNORE INTO threads (id, op) VALUES (${thread.id}, ${interaction.user.id})`);
+		sql.query(`SELECT * FROM threads WHERE id = ${thread.id}`, (err, result) => {
+			if (err) throw err;
+			thread.setName(`Feedback request #${result[0].num}`);
+		})
+	
+		interaction.reply({content: `Thread created: ${thread.url}`, ephemeral: true});
 	})
-	await sql.promise().query(`INSERT IGNORE INTO threads (id, op) VALUES (${thread.id}, ${interaction.user.id})`);
-	sql.query(`SELECT * FROM threads WHERE id = ${thread.id}`, (err, result) => {
-		if (err) throw err;
-		console.log(result);
-		thread.setName(`Feedback request #${result[0].num}`);
-	})
-
-	interaction.reply(`Thread created: ${thread.url}`);
 }
 
 async function archive(interaction, client) {
@@ -85,7 +88,7 @@ function check(interaction) {
 			if (err) throw err;
 	
 			if (result[0].is_banned === 1) {
-				interaction.reply("You have been banned from submitting feedback requests");
+				interaction.reply("You are been banned from submitting feedback requests");
 				return resolve(true);
 			}
 	

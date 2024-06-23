@@ -6,6 +6,7 @@ const sql = require("./../../database.js");
 
 const defconfig = {
 	"thread": {
+		"channel": null,
 		"inactivity": ThreadAutoArchiveDuration.ThreeDays,
 		"age": 7
 	},
@@ -23,13 +24,19 @@ const days = {
 	10080: "one week"
 }
 
+const func = {
+	"init": init,
+	"channel": channel
+}
+
 function output(val) {
 	return {
 		"inactivity": `Thread inactivity period has been configured to **${days[val]}**`,
 		"age": `Thread age has been configured to **${val} days**`,
 		"cooldown": `User cooldown has been configured to **${val} days**`,
 		"cost": `Post cost has been configured to **${val} points**`,
-		"reward": `Feedback reward has been configured to **${val} points**`
+		"reward": `Feedback reward has been configured to **${val} points**`,
+		"channel": `${val} has been chosen as the feedback forum channel`
 	}
 }
 
@@ -38,10 +45,11 @@ module.exports = {
 		client.on("interactionCreate", (interaction) => {
 			if (!interaction.isChatInputCommand() || interaction.commandName !== "config") return;
 			
-			if (interaction.options.getSubcommand() === "init") {
-				init(interaction);
+			sub = interaction.options.getSubcommand();
+			if (sub in func) {
+				func[sub](interaction);
 			} else {
-				config(interaction);
+				config(interaction, sub);
 			}
 		});
 	}
@@ -71,9 +79,8 @@ function init(interaction) {
 	interaction.reply("Database initialized");
 }
 
-function config(interaction) {
+function config(interaction, sub) {
 	const group = interaction.options.getSubcommandGroup();
-	const sub = interaction.options.getSubcommand();
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, string) => {
 		if (err) throw err;
 		const data = JSON.parse(string);
@@ -83,5 +90,17 @@ function config(interaction) {
 		})
 		interaction.reply(output(data[group][sub])[sub]);
 	})
+}
 
+function channel(interaction) {
+	fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, string) => {
+		if (err) throw err;
+		const data = JSON.parse(string);
+		const channel = interaction.options.getChannel("channel")
+		data.thread[sub] = channel.id;
+		fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(data, null, 4), err => {
+			if (err) throw err;
+		})
+		interaction.reply(output(channel)[sub]);
+	})
 }
