@@ -36,7 +36,10 @@ async function set(interaction) {
 
 	sql.query(`UPDATE users SET points = ${value} WHERE id = ${user.id}`);
 
-	interaction.reply(`**${user.globalName}**'s points have been set to **${value}**`);
+	interaction.reply({
+		content: `**${user.globalName}**'s points have been set to **${value}**`,
+		ephemeral: true
+	});
 }
 
 async function add(interaction) {
@@ -51,7 +54,10 @@ async function add(interaction) {
 	await sql.promise().query(`UPDATE users SET points = points + ${value} WHERE id = ${user.id}`);
 	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, (err, result) => {
 		if (err) throw err;
-		interaction.reply(`**${user.globalName}**'s points have been set to **${result[0].points}**`)
+		interaction.reply({
+			content: `**${user.globalName}**'s points have been set to **${result[0].points}**`,
+			ephemeral: true
+		})
 	});
 }
 
@@ -74,7 +80,10 @@ async function remove(interaction) {
 
 	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, (err, result) => {
 		if (err) throw err;
-		interaction.reply(`**${user.globalName}**'s points have been set to **${result[0].points}**`)
+		interaction.reply({
+			content: `**${user.globalName}**'s points have been set to **${result[0].points}**`,
+			ephemeral: true
+		})
 	});
 }
 
@@ -87,7 +96,10 @@ async function count(interaction) {
 
 	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, (err, result) => {
 		if (err) throw err;
-		interaction.reply(`**${user.globalName}** has **${result[0].points}** points`)
+		interaction.reply({
+			content: `**${user.globalName}** has **${result[0].points}** points`,
+			ephemeral: true
+		})
 	});
 }
 
@@ -101,10 +113,16 @@ async function ban(interaction) {
 	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, async (err, result) => {
 		if (err) throw err;
 		if (result[0].is_banned === 1) {
-			interaction.reply(`**${user.globalName}** is already banned from the feedback system`)
+			interaction.reply({
+				content: `**${user.globalName}** is already banned from the feedback system`,
+				ephemeral: true
+			})
 		} else {
 			await sql.promise().query(`UPDATE users SET is_banned = 1 WHERE id = ${user.id}`)
-			interaction.reply(`**${user.globalName}** has been banned from the feedback system`)
+			interaction.reply({
+				content: `**${user.globalName}** has been banned from the feedback system`,
+				ephemeral: true
+			})
 		}
 	});
 }
@@ -119,10 +137,16 @@ async function pardon(interaction) {
 	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, async (err, result) => {
 		if (err) throw err;
 		if (result[0].is_banned === 0) {
-			interaction.reply(`**${user.globalName}** is not banned from the feedback system`)
+			interaction.reply({
+				content: `**${user.globalName}** is not banned from the feedback system`,
+				ephemeral: true
+			})
 		} else {
 			await sql.promise().query(`UPDATE users SET is_banned = 0 WHERE id = ${user.id}`)
-			interaction.reply(`**${user.globalName}** has been unbanned from the feedback system`)
+			interaction.reply({
+				content: `**${user.globalName}** has been unbanned from the feedback system`,
+				ephemeral: true
+			})
 		}
 	});
 }

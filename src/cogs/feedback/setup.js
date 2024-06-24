@@ -76,7 +76,10 @@ function init(interaction) {
 		if (err) console.log(err);
 	})
 	console.log("Database initialized");
-	interaction.reply("Database initialized");
+	interaction.reply({
+		content:"Database initialized",
+		ephemeral: true
+	});
 }
 
 function config(interaction, sub) {
@@ -88,7 +91,10 @@ function config(interaction, sub) {
 		fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(data, null, 4), err => {
 			if (err) throw err;
 		})
-		interaction.reply(output(data[group][sub])[sub]);
+		interaction.reply({
+			content: output(data[group][sub])[sub],
+			ephemeral: true
+		});
 	})
 }
 
@@ -101,6 +107,9 @@ function channel(interaction) {
 		fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(data, null, 4), err => {
 			if (err) throw err;
 		})
-		interaction.reply(output(channel)[sub]);
+		interaction.reply({
+			content: output(channel)[sub],
+			ephemeral: true
+		});
 	})
 }
