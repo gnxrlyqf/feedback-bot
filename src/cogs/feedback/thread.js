@@ -6,7 +6,8 @@ const sql = require("./../../database.js");
 
 const func = {
 	"ask": ask,
-	"archive": archive
+	"archive": archive,
+	"close": close
 }
 
 module.exports = {
@@ -59,7 +60,7 @@ async function ask(interaction, client) {
 	})
 }
 
-async function archive(interaction, client) {
+function archive(interaction, client) {
 	const num = interaction.options.getInteger("num")
 
 	sql.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
@@ -67,9 +68,8 @@ async function archive(interaction, client) {
 		const forum = await client.channels.fetch(process.env.FORUM_ID);
 		if (result) {
 			const thread = await forum.threads.fetch(result[0].id);
-			const archived = await forum.threads.fetchArchived()
 			if (thread) {
-				if (thread === await archived.threads.get(thread.id)) {
+				if (thread.archived) {
 					interaction.reply("Thread already archived")
 				} else {
 					await thread.setArchived(true);
@@ -80,6 +80,31 @@ async function archive(interaction, client) {
 			interaction.reply("Thread not found");
 		}
 	})
+}
+
+function close(interaction, client) {
+	const num = interaction.options.getInteger("num");
+
+	sql.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
+		if (err) throw err;
+		const forum = await client.channels.fetch(process.env.FORUM_ID);
+		if (result) {
+			const thread = await forum.threads.fetch(result[0].id);
+			if (thread) {
+				if (thread.archived) thread.setArchived(false)
+				if (thread.locked) {
+					interaction.reply("Thread already closed")
+				} else {
+					thread.setLocked(true)
+					thread.setArchived(true);
+					interaction.reply("Thread closed");
+				}
+			}
+		} else {
+			interaction.reply("Thread not found");
+		}
+	})
+
 }
 
 function check(interaction) {

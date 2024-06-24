@@ -45,18 +45,6 @@ const commands = [
 		]
 	},
 	{
-		name: "archive",
-		description: "Archives a forum thread",
-		options: [
-			{
-				name: "num",
-				description: "number of the post to be archived",
-				type: ApplicationCommandOptionType.Integer,
-				required: true
-			}
-		]
-	},
-	{
 		name: "config",
 		description: "Configure bot",
 		options: [
@@ -173,6 +161,38 @@ const commands = [
 							}
 						]
 					}		
+				]
+			}
+		]
+	},
+	{
+		name: "thread",
+		description: "Set thread attributes",
+		options: [
+			{
+				name: "archive",
+				description: "Archives a feedback post, archived threads are moved to the bottom of the forum channel",
+				type: ApplicationCommandOptionType.Subcommand,
+				options: [
+					{
+						name: "num",
+						description: "number of the post to be archived",
+						type: ApplicationCommandOptionType.Integer,
+						required: true
+					}
+				]
+			},
+			{
+				name: "close",
+				description: "Closes a feedback post. Users cannot give feedback in closed posts. Closed posts are also archived",
+				type: ApplicationCommandOptionType.Subcommand,
+				options: [
+					{
+						name: "num",
+						description: "number of the post to be closed",
+						type: ApplicationCommandOptionType.Integer,
+						required: true
+					}
 				]
 			}
 		]
