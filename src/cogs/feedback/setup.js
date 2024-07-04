@@ -1,4 +1,4 @@
-const { ThreadAutoArchiveDuration } = require("discord.js");
+const { ThreadAutoArchiveDuration, PermissionsBitField } = require("discord.js");
 require("dotenv").config();
 const fs = require("fs");
 
@@ -13,7 +13,8 @@ const defconfig = {
 	"user": {
 		"cooldown": 3,
 		"cost": 3,
-		"reward": 1	
+		"reward": 1,
+		"role": null
 	}
 }
 
@@ -26,7 +27,8 @@ const days = {
 
 const func = {
 	"init": init,
-	"channel": channel
+	"channel": channel,
+	"role": role
 }
 
 function output(val) {
@@ -35,8 +37,7 @@ function output(val) {
 		"age": `Thread age has been configured to **${val} days**`,
 		"cooldown": `User cooldown has been configured to **${val} days**`,
 		"cost": `Post cost has been configured to **${val} points**`,
-		"reward": `Feedback reward has been configured to **${val} points**`,
-		"channel": `${val} has been chosen as the feedback forum channel`
+		"reward": `Feedback reward has been configured to **${val} points**`
 	}
 }
 
@@ -45,7 +46,9 @@ module.exports = {
 		client.on("interactionCreate", (interaction) => {
 			if (!interaction.isChatInputCommand() || interaction.commandName !== "config") return;
 			
-			sub = interaction.options.getSubcommand();
+			if (!admin(interaction)) return;
+
+			const sub = interaction.options.getSubcommand();
 			if (sub in func) {
 				func[sub](interaction);
 			} else {
@@ -68,7 +71,8 @@ function init(interaction) {
 		CREATE TABLE threads (
 			num INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 			id VARCHAR(256),
-			op VARCHAR(256)
+			op VARCHAR(256),
+			file VARCHAR(1024)
 		);
 	`, (err) => { if (err) throw err})
 	
@@ -86,6 +90,7 @@ function config(interaction, sub) {
 	const group = interaction.options.getSubcommandGroup();
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, string) => {
 		if (err) throw err;
+
 		const data = JSON.parse(string);
 		data[group][sub] = interaction.options.getInteger("value");
 		fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(data, null, 4), err => {
@@ -101,6 +106,7 @@ function config(interaction, sub) {
 function channel(interaction) {
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, string) => {
 		if (err) throw err;
+
 		const data = JSON.parse(string);
 		const channel = interaction.options.getChannel("channel")
 		data.thread[sub] = channel.id;
@@ -108,8 +114,37 @@ function channel(interaction) {
 			if (err) throw err;
 		})
 		interaction.reply({
-			content: output(channel)[sub],
+			content: `${channel} has been chosen as the feedback forum channel`,
 			ephemeral: true
 		});
 	})
+}
+
+function role(interaction) {
+	fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, string) => {
+		if (err) throw err;
+
+		const data = JSON.parse(string);
+		const role = interaction.options.getRole("role")
+		data.user.role = role.id;
+		fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(data, null, 4), err => {
+			if (err) throw err;
+		})
+		interaction.reply({
+			content: `${role} has been chosen as the common user role`,
+			ephemeral: true
+		});
+
+	})
+}
+
+function admin(interaction) {
+	if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+		interaction.reply({
+			content: "This command can only be used by an administrator",
+			ephemeral: true
+		})
+		return (false);
+	}
+	return (true)
 }

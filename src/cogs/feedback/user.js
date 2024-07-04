@@ -1,4 +1,4 @@
-const {} = require("discord.js");
+const { PermissionsBitField } = require("discord.js");
 require("dotenv").config();
 const fs = require("fs");
 
@@ -8,7 +8,6 @@ const func = {
 	"set": set,
 	"add": add,
 	"remove": remove,
-	"count": count,
 	"ban": ban,
 	"pardon": pardon
 }
@@ -16,10 +15,13 @@ const func = {
 module.exports = {
 	load(client) {
 		client.on("interactionCreate", (interaction) => {
-			if (!interaction.isChatInputCommand()) return;
+			if (!interaction.isChatInputCommand() || interaction.commandName !== "user") return;
 
 			const sub = interaction.options.getSubcommand();
-			if (sub in func) {
+			if (sub === "count") {
+				count(interaction)
+			} else if (sub in func) {
+				if (!admin(interaction)) return;
 				func[sub](interaction);
 			}
 		})
@@ -89,18 +91,15 @@ async function remove(interaction) {
 
 async function count(interaction) {
 	let user = interaction.options.getUser("user");
+	user = user || interaction.user;
 	await sql.promise().query(`
 		INSERT IGNORE INTO users (id, points, is_banned)
 		VALUES (${user.id}, 0, 0)`);
-	user = user || interaction.user;
 
 	sql.query(`SELECT * FROM users WHERE id = ${user.id}`, (err, result) => {
 		if (err) throw err;
-		interaction.reply({
-			content: `**${user.globalName}** has **${result[0].points}** points`,
-			ephemeral: true
-		})
-	});
+		interaction.reply(`**${user.globalName}** has **${result[0].points}** points`)
+	})
 }
 
 async function ban(interaction) {
@@ -149,4 +148,15 @@ async function pardon(interaction) {
 			})
 		}
 	});
+}
+
+function admin(interaction) {
+	if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+		interaction.reply({
+			content: "This command can only be used by an administrator",
+			ephemeral: true
+		})
+		return (false);
+	}
+	return (true)
 }

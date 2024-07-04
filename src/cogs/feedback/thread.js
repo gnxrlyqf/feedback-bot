@@ -1,4 +1,4 @@
-const {} = require("discord.js");
+const { Guild } = require("discord.js");
 require("dotenv").config();
 const fs = require("fs");
 
@@ -7,7 +7,8 @@ const sql = require("./../../database.js");
 const func = {
 	"ask": ask,
 	"archive": archive,
-	"close": close
+	"close": close,
+	"give": give
 }
 
 module.exports = {
@@ -34,9 +35,19 @@ async function ask(interaction, client) {
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, string) => {
 		if (err) throw err;
 		const config = JSON.parse(string);
+		let forum;
 
-		const forum = await client.channels.fetch(config.thread.channel);
+		try {
+			forum = await client.channels.fetch(config.thread.channel);
+		} catch (error) {
+			interaction.reply({
+				content: `Feedback forum channel not configured`,
+				ephemeral: true
+			})
+			return;
+		}
 		const file = interaction.options.getAttachment("file");
+		const anon = interaction.options.getBoolean("anonymous");
 	
 		const thread = await forum.threads.create({
 			name: "Feedback request",
@@ -48,17 +59,47 @@ async function ask(interaction, client) {
 			SET points = points - ${config.user.cost}
 			WHERE id = ${interaction.user.id}
 		`)
-		await sql.promise().query(`INSERT IGNORE INTO threads (id, op) VALUES (${thread.id}, ${interaction.user.id})`);
+		await sql.promise().query(`
+			INSERT IGNORE INTO threads (id, op, file)
+			VALUES (${thread.id}, ${interaction.user.id}, ${file})
+		`);
 		sql.query(`SELECT * FROM threads WHERE id = ${thread.id}`, (err, result) => {
 			if (err) throw err;
-			thread.setName(`Feedback request #${result[0].num}`);
+			thread.setName(`Feedback request #${result[0].num}`.concat(anon ? "" : ` - ${interaction.user.globalName}`));
 		})
 	
 		interaction.reply({content: `Thread created: ${thread.url}`, ephemeral: true});
 	})
 }
 
+async function give(interaction, client) {
+	const channel = await interaction.guild.channels.create({
+		name: "feedback-temp"
+	})
+
+	let feedback = [];
+	const coll = channel.createMessageCollector({
+		filter: message => message.author === interaction.user,
+		time: 20_000
+	})
+
+	coll.on("collect", message => {
+		feedback.push(message.content);
+		console.log(message.content)
+	})
+
+	coll.on("end", () => {
+		channel.send("Your feedback has been saved and sent to the recipient");
+	})
+
+	setTimeout(() => {
+		channel.delete()
+	}, 25_000)
+}
+
 function archive(interaction, client) {
+	if (!admin(interaction)) return;
+
 	const num = interaction.options.getInteger("num")
 
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, data) => {
@@ -85,6 +126,8 @@ function archive(interaction, client) {
 }
 
 function close(interaction, client) {
+	if (!admin(interaction)) return;
+
 	const num = interaction.options.getInteger("num");
 
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, data) => {
@@ -139,4 +182,15 @@ function check(interaction) {
 			})
 		})
 	})
+}
+
+function admin(interaction) {
+	if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+		interaction.reply({
+			content: "This command can only be used by an administrator",
+			ephemeral: true
+		})
+		return (false);
+	}
+	return (true)
 }

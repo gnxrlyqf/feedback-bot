@@ -19,14 +19,14 @@ const commands = [
 						required: true
 					},
 					{
+						name: "anonymous",
+						description: "Submit request anonymously (True by default)",
+						type: ApplicationCommandOptionType.Boolean
+					},
+					{
 						name: "message",
 						description: "Write a short message in your post",
 						type: ApplicationCommandOptionType.String
-					},
-					{
-						name: "anonymous",
-						description: "Submit request anonymously (False by default)",
-						type: ApplicationCommandOptionType.Boolean
 					}
 				]
 			},
@@ -35,6 +35,11 @@ const commands = [
 				description: "Give feedback",
 				type: ApplicationCommandOptionType.Subcommand,
 				options: [
+					{
+						name: "post",
+						description: "Number of the forum post, you don't need to specify this if you run the command in the forum post",
+						type: ApplicationCommandOptionType.Integer
+					},
 					{
 						name: "anonymous",
 						description: "Give feedback anonymously (False by default)",
@@ -122,6 +127,19 @@ const commands = [
 				description: "Configure user attributes",
 				type: ApplicationCommandOptionType.SubcommandGroup,
 				options: [
+					{
+						name: "role",
+						description: "Configure user role",
+						type: ApplicationCommandOptionType.Subcommand,
+						options: [
+							{
+								name: "role",
+								description: "Role to select",
+								type: ApplicationCommandOptionType.Role,
+								required: true
+							}
+						]
+					},
 					{
 						name: "cooldown",
 						description: "How long users have to wait between feedback request submissions.",

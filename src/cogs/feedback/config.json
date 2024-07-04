@@ -1,12 +1,13 @@
 {
     "thread": {
-        "channel": "1252211522713813064",
+        "channel": null,
         "inactivity": 4320,
         "age": 7
     },
     "user": {
         "cooldown": 3,
         "cost": 3,
-        "reward": 1
+        "reward": 1,
+        "role": "1256919562155462676"
     }
 }
