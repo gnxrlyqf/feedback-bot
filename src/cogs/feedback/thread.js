@@ -1,4 +1,4 @@
-const { Guild } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 require("dotenv").config();
 const fs = require("fs");
 
@@ -8,7 +8,6 @@ const func = {
 	"ask": ask,
 	"archive": archive,
 	"close": close,
-	"give": give
 }
 
 module.exports = {
@@ -27,7 +26,7 @@ module.exports = {
 async function ask(interaction, client) {
 	await sql.promise().query(`
 		INSERT IGNORE INTO users (id, points, is_banned)
-		VALUES (${interaction.user.id}, 0, is_banned)
+		VALUES (${interaction.user.id}, 0, is_banned);
 	`);
 	
 	if (await check(interaction)) return;
@@ -61,40 +60,31 @@ async function ask(interaction, client) {
 		`)
 		await sql.promise().query(`
 			INSERT IGNORE INTO threads (id, op, file)
-			VALUES (${thread.id}, ${interaction.user.id}, ${file})
+			VALUES (${thread.id}, ${interaction.user.id}, "${file.url}");
 		`);
-		sql.query(`SELECT * FROM threads WHERE id = ${thread.id}`, (err, result) => {
+		sql.query(`SELECT * FROM threads WHERE id = ${thread.id}`, async (err, result) => {
 			if (err) throw err;
-			thread.setName(`Feedback request #${result[0].num}`.concat(anon ? "" : ` - ${interaction.user.globalName}`));
+			sql.query(`
+				INSERT IGNORE INTO contributions (user_id, thread_num)
+				VALUES (${interaction.user.id}, ${result[0].num})
+			`)
+
+			await thread.setName(`Feedback request #${result[0].num}`.concat(anon ? "" : ` - ${interaction.user.globalName}`));
+			thread.send({
+				content: "Press the button below to give feedback",
+				components: [
+					new ActionRowBuilder().addComponents(
+						new ButtonBuilder()
+						.setCustomId(`give-${result[0].num}`)
+						.setLabel("Give feedback")
+						.setStyle(ButtonStyle.Success)
+					)
+				]
+			})
 		})
 	
 		interaction.reply({content: `Thread created: ${thread.url}`, ephemeral: true});
 	})
-}
-
-async function give(interaction, client) {
-	const channel = await interaction.guild.channels.create({
-		name: "feedback-temp"
-	})
-
-	let feedback = [];
-	const coll = channel.createMessageCollector({
-		filter: message => message.author === interaction.user,
-		time: 20_000
-	})
-
-	coll.on("collect", message => {
-		feedback.push(message.content);
-		console.log(message.content)
-	})
-
-	coll.on("end", () => {
-		channel.send("Your feedback has been saved and sent to the recipient");
-	})
-
-	setTimeout(() => {
-		channel.delete()
-	}, 25_000)
 }
 
 function archive(interaction, client) {
@@ -106,10 +96,10 @@ function archive(interaction, client) {
 		if (err) throw err;
 		const config = JSON.parse(data);
 		const channel = config.thread.channel;
+		const forum = await client.channels.fetch(channel);
 
 		sql.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
 			if (err) throw err;
-			const forum = await client.channels.fetch(channel);
 			if (result.length === 0) {
 				interaction.reply({content: "Thread not found", ephemeral: true});
 				return;

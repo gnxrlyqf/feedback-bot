@@ -72,8 +72,16 @@ function init(interaction) {
 			num INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 			id VARCHAR(256),
 			op VARCHAR(256),
-			file VARCHAR(1024)
+			file VARCHAR(1024),
+			FOREIGN KEY (op) REFERENCES users(id)
 		);
+		CREATE TABLE contributions (
+			user_id VARCHAR(256),
+			thread_num INT,
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (thread_num) REFERENCES threads(num)
+		);
+
 	`, (err) => { if (err) throw err})
 	
 	fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(defconfig, null, 4), err => {
@@ -109,6 +117,7 @@ function channel(interaction) {
 
 		const data = JSON.parse(string);
 		const channel = interaction.options.getChannel("channel")
+		const sub = interaction.options.getSubcommand();
 		data.thread[sub] = channel.id;
 		fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(data, null, 4), err => {
 			if (err) throw err;
