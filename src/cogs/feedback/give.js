@@ -25,10 +25,15 @@ async function give(interaction, client, num) {
 		VALUES (${interaction.user.id}, 0, is_banned);
 	`);
 
+	if (await check(interaction, num)) return;
+
 	sql.query(`
 		INSERT IGNORE INTO contributions (user_id, thread_num)
 		VALUES (${interaction.user.id}, ${num})
 	`)
+
+	const thread = await sql.promise().query(`SELECT * FROM threads WHERE num = ${num}`)
+
 	const channel = await interaction.guild.channels.create({
 		name: "feedback-temp",
 		permissionOverwrites: [
@@ -69,20 +74,15 @@ async function give(interaction, client, num) {
 			if (err) throw err;
 			const config = JSON.parse(data);
 			channel.send(`Your feedback has been saved and sent to the recipient and you have been awarded ${config.user.reward} points. This channel will be closed in one minute`);
-			const post = config.thread.channel;
-			const forum = await client.channels.fetch(post);
+			const forum = await client.channels.fetch(config.thread.channel);
+			const post = await forum.threads.fetch(thread[0][0].id);
+			await post.send(feedback.join("\n"));
 
 			await sql.promise().query(`
 				UPDATE users
 				SET points = points + ${config.user.reward}
 				WHERE id = ${interaction.user.id}
 			`)
-			sql.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
-				if (err) throw err;
-				const thread = await forum.threads.fetch(result[0].id);
-
-				await thread.send(feedback.join("\n"));
-			})
 			sql.query(`
 				INSERT INTO contributions (user_id, thread_num)
 				VALUES (${interaction.user.id}, ${num})
@@ -128,7 +128,7 @@ function check(interaction, num) {
 				});
 				return resolve(true);
 			}
+			return resolve(false);
 		});
-		return resolve(false);
 	})
 }

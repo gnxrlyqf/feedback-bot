@@ -20,7 +20,7 @@ const commands = [
 					},
 					{
 						name: "anonymous",
-						description: "Submit request anonymously (True by default)",
+						description: "Submit request anonymously (False	 by default)",
 						type: ApplicationCommandOptionType.Boolean
 					},
 					{
@@ -335,6 +335,35 @@ const commands = [
 						name: "banned",
 						description: "Lists banned users",
 						type: ApplicationCommandOptionType.Subcommand
+					}
+				]
+			}
+		]
+	},
+	{
+		name: "help",
+		description: "get help about the feedback bot commands",
+		options: [
+			{
+				name: "topic",
+				description: "Topic you want to get help on",
+				type: ApplicationCommandOptionType.String,
+				choices: [
+					{
+						name: "feedback",
+						value: "feedback"
+					},
+					{
+						name: "config",
+						value: "config"
+					},
+					{
+						name: "user",
+						value: "user"
+					},
+					{
+						name: "thread",
+						value: "thread"
 					}
 				]
 			}

@@ -13,7 +13,7 @@ const func = {
 module.exports = {
 	load(client) {
 		client.on("interactionCreate", (interaction) => {
-			if (!interaction.isChatInputCommand()) return;
+			if (!interaction.isChatInputCommand() || interaction.commandName !== "feedback") return;
 
 			const sub = interaction.options.getSubcommand();
 			if (sub in func) {
