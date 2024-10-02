@@ -13,9 +13,9 @@ const defconfig = {
 	"user": {
 		"cooldown": 3,
 		"cost": 3,
-		"reward": 1,
-		"role": null
-	}
+		"reward": 1
+	},
+	"mod": null
 }
 
 const days = {
@@ -28,7 +28,7 @@ const days = {
 const func = {
 	"init": init,
 	"channel": channel,
-	"role": role
+	"mod": mod
 }
 
 function output(val) {
@@ -129,18 +129,18 @@ function channel(interaction) {
 	})
 }
 
-function role(interaction) {
+function mod(interaction) {
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, string) => {
 		if (err) throw err;
 
 		const data = JSON.parse(string);
 		const role = interaction.options.getRole("role")
-		data.user.role = role.id;
+		data.mod = role.id;
 		fs.writeFile("./src/cogs/feedback/config.json", JSON.stringify(data, null, 4), err => {
 			if (err) throw err;
 		})
 		interaction.reply({
-			content: `${role} has been chosen as the common user role`,
+			content: `${role} has been selected for the moderator role`,
 			ephemeral: true
 		});
 

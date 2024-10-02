@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionsBitField } = require("discord.js");
 require("dotenv").config();
 const fs = require("fs");
 
@@ -13,7 +13,7 @@ const func = {
 module.exports = {
 	load(client) {
 		client.on("interactionCreate", (interaction) => {
-			if (!interaction.isChatInputCommand() || interaction.commandName !== "feedback") return;
+			if (!interaction.isChatInputCommand()) return;
 
 			const sub = interaction.options.getSubcommand();
 			if (sub in func) {
@@ -77,6 +77,10 @@ async function ask(interaction, client) {
 						new ButtonBuilder()
 						.setCustomId(`give-${result[0].num}`)
 						.setLabel("Give feedback")
+						.setStyle(ButtonStyle.Success),
+						new ButtonBuilder()
+						.setCustomId(`give-${result[0].num}-anon`)
+						.setLabel("Give feedback anonymously")
 						.setStyle(ButtonStyle.Success)
 					)
 				]
@@ -88,7 +92,7 @@ async function ask(interaction, client) {
 }
 
 function archive(interaction, client) {
-	if (!admin(interaction)) return;
+	if (!mod(interaction)) return;
 
 	const num = interaction.options.getInteger("num")
 
@@ -116,7 +120,7 @@ function archive(interaction, client) {
 }
 
 function close(interaction, client) {
-	if (!admin(interaction)) return;
+	if (!mod(interaction)) return;
 
 	const num = interaction.options.getInteger("num");
 
@@ -174,13 +178,29 @@ function check(interaction) {
 	})
 }
 
-function admin(interaction) {
-	if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-		interaction.reply({
-			content: "This command can only be used by an administrator",
-			ephemeral: true
+function mod(interaction) {
+	return new Promise((resolve) => {
+		fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, data) => {
+			if (err) throw err;
+			const config = JSON.parse(data);
+			console.log(config.mod);
+			if (!interaction.member.roles.cache.has(config.mod) && !interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+				interaction.reply({
+					content: "This command can only be used by a moderator or an administrator",
+					ephemeral: true
+				})
+				return resolve(false);
+			}
+			return resolve(true);
 		})
-		return (false);
-	}
-	return (true)
+	})
+
+	// if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+	// 	interaction.reply({
+	// 		content: "This command can only be used by an administrator",
+	// 		ephemeral: true
+	// 	})
+	// 	return (false);
+	// }
+	// return (true)
 }

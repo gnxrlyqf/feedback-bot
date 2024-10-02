@@ -14,12 +14,12 @@ module.exports = {
 			if (!interaction.isButton()) return;
 
 			const parts = interaction.customId.split('-');
-			func[parts[0]](interaction, client, parts[1]);
+			give(interaction, client, parts[1], parts[2]);
 		});
 	}
 }
 
-async function give(interaction, client, num) {
+async function give(interaction, client, num, anon) {
 	await sql.promise().query(`
 		INSERT IGNORE INTO users (id, points, is_banned)
 		VALUES (${interaction.user.id}, 0, is_banned);
@@ -70,13 +70,24 @@ async function give(interaction, client, num) {
 		setTimeout(() => {
 			channel.delete()
 		}, 60_000)
+
+		if (!feedback.length) {
+			channel.send(`You have cancelled this feedback, this channel will be closed in one minute`);
+			return;
+		}
+		
 		fs.readFile("./src/cogs/feedback/config.json", "utf-8", async (err, data) => {
 			if (err) throw err;
 			const config = JSON.parse(data);
 			channel.send(`Your feedback has been saved and sent to the recipient and you have been awarded ${config.user.reward} points. This channel will be closed in one minute`);
 			const forum = await client.channels.fetch(config.thread.channel);
 			const post = await forum.threads.fetch(thread[0][0].id);
-			await post.send(feedback.join("\n"));
+			const name = anon ? "Anonymous user" : interaction.user.globalName;
+			const message = {
+				title: name + " writes:",
+				description: feedback.join('\n')
+			}
+			await post.send({ embeds: [message] });
 
 			await sql.promise().query(`
 				UPDATE users

@@ -30,23 +30,23 @@ const commands = [
 					}
 				]
 			},
-			{
-				name: "give",
-				description: "Give feedback",
-				type: ApplicationCommandOptionType.Subcommand,
-				options: [
-					{
-						name: "post",
-						description: "Number of the forum post, you don't need to specify this if you run the command in the forum post",
-						type: ApplicationCommandOptionType.Integer
-					},
-					{
-						name: "anonymous",
-						description: "Give feedback anonymously (False by default)",
-						type: ApplicationCommandOptionType.Boolean
-					}
-				]
-			}
+			// {
+			// 	name: "give",
+			// 	description: "Give feedback",
+			// 	type: ApplicationCommandOptionType.Subcommand,
+			// 	options: [
+			// 		{
+			// 			name: "post",
+			// 			description: "Number of the forum post, you don't need to specify this if you run the command in the forum post",
+			// 			type: ApplicationCommandOptionType.Integer
+			// 		},
+			// 		{
+			// 			name: "anonymous",
+			// 			description: "Give feedback anonymously (False by default)",
+			// 			type: ApplicationCommandOptionType.Boolean
+			// 		}
+			// 	]
+			// }
 		]
 	},
 	{
@@ -123,23 +123,36 @@ const commands = [
 				]
 			},
 			{
+				name: "mod",
+				description: "Configure moderator role",
+				type:ApplicationCommandOptionType.Subcommand,
+				options: [
+					{
+						name: "role",
+						description: "role to select",
+						type: ApplicationCommandOptionType.Role,
+						required: true
+					}
+				]
+			},
+			{
 				name: "user",
 				description: "Configure user attributes",
 				type: ApplicationCommandOptionType.SubcommandGroup,
 				options: [
-					{
-						name: "role",
-						description: "Configure user role",
-						type: ApplicationCommandOptionType.Subcommand,
-						options: [
-							{
-								name: "role",
-								description: "Role to select",
-								type: ApplicationCommandOptionType.Role,
-								required: true
-							}
-						]
-					},
+					// {
+					// 	name: "role",
+					// 	description: "Configure user role",
+					// 	type: ApplicationCommandOptionType.Subcommand,
+					// 	options: [
+					// 		{
+					// 			name: "role",
+					// 			description: "Role to select",
+					// 			type: ApplicationCommandOptionType.Role,
+					// 			required: true
+					// 		}
+					// 	]
+					// },
 					{
 						name: "cooldown",
 						description: "How long users have to wait between feedback request submissions.",
