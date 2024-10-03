@@ -89,13 +89,13 @@ const config = {
 
 const user = {
 	title: "/user help",
-	description: "Usage: `/user {list | ban | pardon | points} {args...}`",
+	description: "Usage: `/user {ban | pardon | points} {args...}`",
 	fields: [
-		{
-			name: "list",
-			value: "List all users currently registered in the feedback system\n\
-			Usage: `/user list`"
-		},
+		// {
+		// 	name: "list",
+		// 	value: "List all users currently registered in the feedback system\n\
+		// 	Usage: `/user list`"
+		// },
 		{
 			name: "ban",
 			value: "Ban a user from the feedback system. Banned users cannot submit feedback requests or give feedback on posts\n\

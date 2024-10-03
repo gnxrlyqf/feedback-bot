@@ -112,7 +112,7 @@ async function archive(interaction, client) {
 			}
 			const thread = await forum.threads.fetch(result[0].id);
 			if (!thread.archived) {
-				interaction.reply({content: "Thread archived", ephemeral: true});
+				await interaction.reply({content: "Thread archived", ephemeral: true});
 				thread.setArchived(true);
 				return;
 			}

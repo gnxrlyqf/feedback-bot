@@ -319,23 +319,23 @@ const commands = [
 					}
 				]
 			},
-			{
-				name: "list",
-				description: "Show users registered into the feedback system",
-				type: ApplicationCommandOptionType.SubcommandGroup,
-				options: [
-					{
-						name: "all",
-						description: "Lists all users",
-						type: ApplicationCommandOptionType.Subcommand
-					},
-					{
-						name: "banned",
-						description: "Lists banned users",
-						type: ApplicationCommandOptionType.Subcommand
-					}
-				]
-			}
+			// {
+			// 	name: "list",
+			// 	description: "Show users registered into the feedback system",
+			// 	type: ApplicationCommandOptionType.SubcommandGroup,
+			// 	options: [
+			// 		{
+			// 			name: "all",
+			// 			description: "Lists all users",
+			// 			type: ApplicationCommandOptionType.Subcommand
+			// 		},
+			// 		{
+			// 			name: "banned",
+			// 			description: "Lists banned users",
+			// 			type: ApplicationCommandOptionType.Subcommand
+			// 		}
+			// 	]
+			// }
 		]
 	},
 	{
