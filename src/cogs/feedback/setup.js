@@ -95,6 +95,8 @@ function init(interaction) {
 }
 
 function config(interaction, sub) {
+	if (!admin(interaction)) return;
+
 	const group = interaction.options.getSubcommandGroup();
 	fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, string) => {
 		if (err) throw err;
@@ -123,7 +125,7 @@ function channel(interaction) {
 			if (err) throw err;
 		})
 		interaction.reply({
-			content: `${channel} has been chosen as the feedback forum channel`,
+			content: `${channel} has been selected as the dedicated feedback forum channel`,
 			ephemeral: true
 		});
 	})

@@ -4,6 +4,8 @@ const fs = require("fs");
 
 const sql = require("./../../database.js");
 
+const options = ["feedback", "thread"];
+
 const func = {
 	"ask": ask,
 	"archive": archive,
@@ -13,7 +15,7 @@ const func = {
 module.exports = {
 	load(client) {
 		client.on("interactionCreate", (interaction) => {
-			if (!interaction.isChatInputCommand()) return;
+			if (!interaction.isChatInputCommand() || !options.includes(interaction.commandName)) return;
 
 			const sub = interaction.options.getSubcommand();
 			if (sub in func) {
@@ -26,7 +28,7 @@ module.exports = {
 async function ask(interaction, client) {
 	await sql.promise().query(`
 		INSERT IGNORE INTO users (id, points, is_banned)
-		VALUES (${interaction.user.id}, 0, is_banned);
+		VALUES (${interaction.user.id}, 0, 0);
 	`);
 	
 	if (await check(interaction)) return;
@@ -91,8 +93,8 @@ async function ask(interaction, client) {
 	})
 }
 
-function archive(interaction, client) {
-	if (!mod(interaction)) return;
+async function archive(interaction, client) {
+	if (!await mod(interaction)) return;
 
 	const num = interaction.options.getInteger("num")
 
@@ -102,7 +104,7 @@ function archive(interaction, client) {
 		const channel = config.thread.channel;
 		const forum = await client.channels.fetch(channel);
 
-		sql.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
+		sql.query(`SELECT * FROM threads WHERE num = ${num} OR id = ${interaction.channel.id}`, async (err, result) => {
 			if (err) throw err;
 			if (result.length === 0) {
 				interaction.reply({content: "Thread not found", ephemeral: true});
@@ -110,8 +112,8 @@ function archive(interaction, client) {
 			}
 			const thread = await forum.threads.fetch(result[0].id);
 			if (!thread.archived) {
-				await thread.setArchived(true);
 				interaction.reply({content: "Thread archived", ephemeral: true});
+				thread.setArchived(true);
 				return;
 			}
 			interaction.reply({content: "Thread already archived", ephemeral: true})
@@ -119,8 +121,8 @@ function archive(interaction, client) {
 	})
 }
 
-function close(interaction, client) {
-	if (!mod(interaction)) return;
+async function close(interaction, client) {
+	if (!await mod(interaction)) return;
 
 	const num = interaction.options.getInteger("num");
 
@@ -129,7 +131,7 @@ function close(interaction, client) {
 		const config = JSON.parse(data);
 		const channel = config.thread.channel;
 
-		sql.query(`SELECT * FROM threads WHERE num = ${num}`, async (err, result) => {
+		sql.query(`SELECT * FROM threads WHERE num = ${num} OR id = ${interaction.channel.id}`, async (err, result) => {
 			if (err) throw err;
 			const forum = await client.channels.fetch(channel);
 			if (result.length === 0) {
@@ -183,7 +185,6 @@ function mod(interaction) {
 		fs.readFile("./src/cogs/feedback/config.json", "utf-8", (err, data) => {
 			if (err) throw err;
 			const config = JSON.parse(data);
-			console.log(config.mod);
 			if (!interaction.member.roles.cache.has(config.mod) && !interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
 				interaction.reply({
 					content: "This command can only be used by a moderator or an administrator",
@@ -194,13 +195,4 @@ function mod(interaction) {
 			return resolve(true);
 		})
 	})
-
-	// if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-	// 	interaction.reply({
-	// 		content: "This command can only be used by an administrator",
-	// 		ephemeral: true
-	// 	})
-	// 	return (false);
-	// }
-	// return (true)
 }

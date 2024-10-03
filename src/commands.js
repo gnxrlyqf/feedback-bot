@@ -140,19 +140,6 @@ const commands = [
 				description: "Configure user attributes",
 				type: ApplicationCommandOptionType.SubcommandGroup,
 				options: [
-					// {
-					// 	name: "role",
-					// 	description: "Configure user role",
-					// 	type: ApplicationCommandOptionType.Subcommand,
-					// 	options: [
-					// 		{
-					// 			name: "role",
-					// 			description: "Role to select",
-					// 			type: ApplicationCommandOptionType.Role,
-					// 			required: true
-					// 		}
-					// 	]
-					// },
 					{
 						name: "cooldown",
 						description: "How long users have to wait between feedback request submissions.",
@@ -209,7 +196,6 @@ const commands = [
 						name: "num",
 						description: "number of the post to be archived",
 						type: ApplicationCommandOptionType.Integer,
-						required: true
 					}
 				]
 			},
@@ -222,7 +208,6 @@ const commands = [
 						name: "num",
 						description: "number of the post to be closed",
 						type: ApplicationCommandOptionType.Integer,
-						required: true
 					}
 				]
 			}
